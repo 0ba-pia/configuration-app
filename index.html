@@ -484,7 +484,7 @@ function onSubmit( event ) {
 	values = [];
 	for (var i=0; i<2; i++) {
 		values.push(document.getElementById("knobmode"+i).selectedIndex);
-		values.push(parseInt(document.getElementById("knobcontrol"+i).value, 16));
+		values.push(document.getElementById("knobcontrol"+i).value);
 	}
 	sendSysEx(pianoDeVoyage, false, EEPROM_KNOBMODE0, values);
 	sendSysEx(pianoDeVoyage, true, EEPROM_KNOBMODE0);
@@ -493,7 +493,7 @@ function onSubmit( event ) {
 	values = [];
 	for (var i=0; i<4; i++) {
 		values.push(document.getElementById("butmode"+i).selectedIndex);
-		values.push(parseInt(document.getElementById("butcontrol"+i).value, 16));
+		values.push(document.getElementById("butcontrol"+i).value);
 	}
 	sendSysEx(pianoDeVoyage, false, EEPROM_BTNMODE0, values);
 	sendSysEx(pianoDeVoyage, true, EEPROM_BTNMODE0);
@@ -617,7 +617,7 @@ function onMIDIMessage( event ) {
 							var mode = values[idx];
 							var cc = values[idx+1];
 							document.getElementById("knobmode"+i).selectedIndex = mode;
-							document.getElementById("knobcontrol"+i).value = cc.toString(16);
+							document.getElementById("knobcontrol"+i).value = cc;
 						}
 					}
 					break;
@@ -629,7 +629,7 @@ function onMIDIMessage( event ) {
 							var mode = values[idx];
 							var cc = values[idx+1];
 							document.getElementById("butmode"+i).selectedIndex = mode;
-							document.getElementById("butcontrol"+i).value = cc.toString(16);
+							document.getElementById("butcontrol"+i).value = cc;
 						}
 					}
 					break;
@@ -755,6 +755,6 @@ initVelocityCanvas();
 });
 
 </script>
-<div style="color : lightgrey;">v1.9.1</div>
+<div style="color : lightgrey;">v1.9.2</div>
  </body>
 </html>
