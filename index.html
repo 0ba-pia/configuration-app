@@ -271,7 +271,7 @@ button, input, optgroup, select, textarea {
 			  <button type="button" id="vel7">7 - Compressed top and bottom</button><br>
 			  <button type="button" id="vel8">8 - Full velocity</button>
 			</div>
-			<div id="EEPROM_RELEASE_VELOCITY_div" hidden>
+			<div id="EEPROM_RELEASE_VELOCITY_div" >
 				<input type="checkbox" id="EEPROM_RELEASE_VELOCITY">
 	  			<label for="enabled"> Release velocity enabled</label><br>
   			</div>
@@ -284,6 +284,11 @@ button, input, optgroup, select, textarea {
 			<input id="reset" type="submit" class="btn btn-primary" value="Load default values" disabled>
 			<input id="load" type="submit" class="btn btn-primary" value="Load from keyboard" disabled>
 			<input id="update" type="submit" class="btn btn-warning" value="Send to keyboard" disabled>
+		</div>
+	</div>
+	<div class="row" id="expert" hidden>
+		<div class="col">
+			<input id="reboot" type="submit" class="btn btn-warning" value="Reboot keyboard" disabled>
 		</div>
 	</div>
 </form>
@@ -327,6 +332,7 @@ const CC = 0xb0;
 const SUSTAIN = 0x40;
 const ACTION_READ = 0x11;
 const ACTION_WRITE = 0x12;
+const ACTION_EXECUTE = 0x13;
 
 
 
@@ -353,6 +359,7 @@ if (navigator.requestMIDIAccess) {
 }
 
 var pianoDeVoyage;
+let searchParams = new URLSearchParams(window.location.search);
 
 function listInputsAndOutputs( midiAccess ) {
 	pianoDeVoyage = null;
@@ -392,6 +399,7 @@ function listInputsAndOutputs( midiAccess ) {
 							document.getElementById("reset").addEventListener("click", onResetDefaults);
 							document.getElementById("update").addEventListener("click", onSubmit);
 							document.getElementById("load").addEventListener("click", onLoadFromKeyboard);
+							document.getElementById("reboot").addEventListener("click", onReboot);
 							
 						} else {
 							// will trigger a state change event
@@ -434,6 +442,11 @@ function onResetDefaults( event ) {
 	document.getElementById("EEPROM_USB_SERIAL").checked = 0;
 }
 
+function onReboot( event ) {
+	event.preventDefault();
+	sendSysEx(pianoDeVoyage, ACTION_EXECUTE, 0);
+}
+
 function onLoadFromKeyboard( event ) {
 	event.preventDefault();
 	loadFromKeyboard();
@@ -441,26 +454,26 @@ function onLoadFromKeyboard( event ) {
 
 function loadFromKeyboard() {
 	// read config
-	sendSysEx(pianoDeVoyage, true, EEPROM_FIRMWARE);
-	sendSysEx(pianoDeVoyage, true, EEPROM_SUSTAIN);
-	sendSysEx(pianoDeVoyage, true, EEPROM_VELOCITY);
-	sendSysEx(pianoDeVoyage, true, EEPROM_RELEASE_VELOCITY);
-	sendSysEx(pianoDeVoyage, true, EEPROM_MIDI_CHANNEL);
-	sendSysEx(pianoDeVoyage, true, EEPROM_TRANSPOSE);
-	sendSysEx(pianoDeVoyage, true, EEPROM_OCTAVE);
-	sendSysEx(pianoDeVoyage, true, EEPROM_KNOBMODE0);
-	sendSysEx(pianoDeVoyage, true, EEPROM_BTNMODE0);
-	sendSysEx(pianoDeVoyage, true, EEPROM_USB_SERIAL);	
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_FIRMWARE);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_SUSTAIN);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_VELOCITY);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_RELEASE_VELOCITY);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_MIDI_CHANNEL);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_TRANSPOSE);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_OCTAVE);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_KNOBMODE0);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_BTNMODE0);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_USB_SERIAL);	
 }
 
 function onSubmit( event ) {
 	event.preventDefault();
-	sendSysEx(pianoDeVoyage, false, EEPROM_SUSTAIN, [document.getElementById("sustain").selectedIndex]);
+	sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_SUSTAIN, [document.getElementById("sustain").selectedIndex]);
 	// send read cmd to make sure we're good
-	sendSysEx(pianoDeVoyage, true, EEPROM_SUSTAIN);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_SUSTAIN);
 
-	sendSysEx(pianoDeVoyage, false, EEPROM_MIDI_CHANNEL, [document.getElementById("channel").selectedIndex]);
-	sendSysEx(pianoDeVoyage, true, EEPROM_MIDI_CHANNEL);
+	sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_MIDI_CHANNEL, [document.getElementById("channel").selectedIndex]);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_MIDI_CHANNEL);
 
 	// velocity
 	var values = [];
@@ -468,17 +481,17 @@ function onSubmit( event ) {
 		values.push(velCurveConfig[i][0]); // x
 		values.push(127-velCurveConfig[i][1]); // y
 	}
-	sendSysEx(pianoDeVoyage, false, EEPROM_VELOCITY, values);
-	sendSysEx(pianoDeVoyage, true, EEPROM_VELOCITY);
+	sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_VELOCITY, values);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_VELOCITY);
 
-	sendSysEx(pianoDeVoyage, false, EEPROM_RELEASE_VELOCITY, [document.getElementById("EEPROM_RELEASE_VELOCITY").checked]);
-	sendSysEx(pianoDeVoyage, true, EEPROM_RELEASE_VELOCITY);
+	sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_RELEASE_VELOCITY, [document.getElementById("EEPROM_RELEASE_VELOCITY").checked]);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_RELEASE_VELOCITY);
 
-	sendSysEx(pianoDeVoyage, false, EEPROM_TRANSPOSE, [document.getElementById("transpose").selectedIndex]);
-	sendSysEx(pianoDeVoyage, true, EEPROM_TRANSPOSE);
+	sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_TRANSPOSE, [document.getElementById("transpose").selectedIndex]);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_TRANSPOSE);
 
-	sendSysEx(pianoDeVoyage, false, EEPROM_OCTAVE, [document.getElementById("octave").selectedIndex]);
-	sendSysEx(pianoDeVoyage, true, EEPROM_OCTAVE);
+	sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_OCTAVE, [document.getElementById("octave").selectedIndex]);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_OCTAVE);
 
 	// knobs
 	values = [];
@@ -486,8 +499,8 @@ function onSubmit( event ) {
 		values.push(document.getElementById("knobmode"+i).selectedIndex);
 		values.push(document.getElementById("knobcontrol"+i).value);
 	}
-	sendSysEx(pianoDeVoyage, false, EEPROM_KNOBMODE0, values);
-	sendSysEx(pianoDeVoyage, true, EEPROM_KNOBMODE0);
+	sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_KNOBMODE0, values);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_KNOBMODE0);
 
 	// switches
 	values = [];
@@ -495,12 +508,12 @@ function onSubmit( event ) {
 		values.push(document.getElementById("butmode"+i).selectedIndex);
 		values.push(document.getElementById("butcontrol"+i).value);
 	}
-	sendSysEx(pianoDeVoyage, false, EEPROM_BTNMODE0, values);
-	sendSysEx(pianoDeVoyage, true, EEPROM_BTNMODE0);
+	sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_BTNMODE0, values);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_BTNMODE0);
 	
 	// usb serial
-	sendSysEx(pianoDeVoyage, false, EEPROM_USB_SERIAL, [document.getElementById("EEPROM_USB_SERIAL").checked]);
-	sendSysEx(pianoDeVoyage, true, EEPROM_USB_SERIAL);
+	sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_USB_SERIAL, [document.getElementById("EEPROM_USB_SERIAL").checked]);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_USB_SERIAL);
 
 	alert("Keyboard configuration updated");
 }
@@ -584,6 +597,11 @@ function onMIDIMessage( event ) {
 					var firmwareVersion = v1*1000+v2*100+v3*10+v4;
 					document.getElementById("firmware").innerHTML = f;
 					// check compatible features
+					if (firmwareVersion >= 2900) {
+						if (searchParams.has('expert')) {
+							document.getElementById("expert").removeAttribute("hidden");
+						}
+					}
 					if (firmwareVersion >= 2850) {
 						document.getElementById("Advanced_div").removeAttribute("hidden");
 						document.getElementById("EEPROM_USB_SERIAL_div").removeAttribute("hidden");
@@ -659,8 +677,7 @@ function readSysExValues(buffer) {
 	return values;
 }
 
-function sendSysEx( output , read, addr, values) {
-	var action = read?ACTION_READ:ACTION_WRITE;
+function sendSysEx( output , action, addr, values) {
 	var buffer = [0xF0, MANUFACTURER_MIDI_ID, 0x10, 0x42, action, addr];
 	if (values) {
 		for (var i=0; i<values.length; i++) {
@@ -755,6 +772,6 @@ initVelocityCanvas();
 });
 
 </script>
-<div style="color : lightgrey;">v1.9.2</div>
+<div style="color : lightgrey;">v1.10.0</div>
  </body>
 </html>
