@@ -47,8 +47,7 @@ button, input, optgroup, select, textarea {
 		<div id="device">
 			Device connected : <span id="device-name"></span> <br>
 			Firmware version : <span id="firmware"></span><br>
-			Note ON : <span id="noteon" style="display: inline-block;width: 20px;">-</span>
-			Pedal : <span id="sustainon" style="display: inline-block;width: 20px;">-</span>
+			MIDI : <span id="midiEvent"></span> <span id="midiValue"></span> <span id="midiValue1"></span>
 		</div>
 		<hr>
 		  <h2>Configuration</h2>
@@ -542,16 +541,24 @@ function onMIDIMessage( event ) {
 	var midiCmd = event.data[0] & 0xF0;
 	switch(midiCmd) {
 		case NOTE_ON:
-			document.getElementById("noteon").innerHTML = v;
+			document.getElementById("midiEvent").innerHTML = "Note On";
+			document.getElementById("midiValue").innerHTML = v;
+			document.getElementById("midiValue1").innerHTML = "";
 			break;
 		case NOTE_OFF:
-			document.getElementById("noteon").innerHTML = "-";
+			document.getElementById("midiEvent").innerHTML = "Note Off";
+			document.getElementById("midiValue").innerHTML = v;
+			document.getElementById("midiValue1").innerHTML = "";
 			break;
 		case CC:
-			if (v == SUSTAIN) {
-				document.getElementById("sustainon").innerHTML = event.data[2];
-				break;
+			document.getElementById("midiEvent").innerHTML = "Control";
+			document.getElementById("midiValue").innerHTML = v;
+			if (typeof event.data[2] !== 'undefined') {
+				document.getElementById("midiValue1").innerHTML = ": "+event.data[2];
+			} else {
+				document.getElementById("midiValue1").innerHTML = "";
 			}
+			break;
 	}
 	if (event.data[0] == 0xF0) {
 		// make sure this is a write event
