@@ -287,7 +287,8 @@ button, input, optgroup, select, textarea {
 	</div>
 	<div class="row" id="expert" hidden>
 		<div class="col">
-			<input id="reboot" type="submit" class="btn btn-warning" value="Reboot keyboard" disabled>
+			<input id="reboot" type="submit" class="btn" value="Reboot keyboard" disabled>
+			<input id="selfTest" type="submit" class="btn" value="Self Test keyboard" disabled>
 		</div>
 	</div>
 </form>
@@ -332,6 +333,8 @@ const SUSTAIN = 0x40;
 const ACTION_READ = 0x11;
 const ACTION_WRITE = 0x12;
 const ACTION_EXECUTE = 0x13;
+
+var selfTestNoteOn = false;
 
 
 
@@ -399,6 +402,7 @@ function listInputsAndOutputs( midiAccess ) {
 							document.getElementById("update").addEventListener("click", onSubmit);
 							document.getElementById("load").addEventListener("click", onLoadFromKeyboard);
 							document.getElementById("reboot").addEventListener("click", onReboot);
+							document.getElementById("selfTest").addEventListener("click", selfTest);
 							
 						} else {
 							// will trigger a state change event
@@ -444,6 +448,16 @@ function onResetDefaults( event ) {
 function onReboot( event ) {
 	event.preventDefault();
 	sendSysEx(pianoDeVoyage, ACTION_EXECUTE, 0);
+}
+
+function selfTest( event ) {
+	event.preventDefault();
+	if (selfTestNoteOn) {
+		pianoDeVoyage.send([0x80, 60, 0x7f]);
+	} else {
+		pianoDeVoyage.send([0x90, 60, 0x7f]);
+	}
+	selfTestNoteOn = !selfTestNoteOn;
 }
 
 function onLoadFromKeyboard( event ) {
