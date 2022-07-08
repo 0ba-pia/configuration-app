@@ -617,12 +617,11 @@ function onMIDIMessage( event ) {
 					f += v4;
 					var firmwareVersion = v1*1000+v2*100+v3*10+v4;
 					document.getElementById("firmware").innerHTML = f;
-					// check compatible features
-					if (firmwareVersion >= 2900) {
-						if (searchParams.has('expert')) {
-							document.getElementById("expert").removeAttribute("hidden");
-						}
+					
+					if (searchParams.has('expert')) {
+						document.getElementById("expert").removeAttribute("hidden");
 					}
+					// display compatible features
 					if (firmwareVersion >= 2850) {
 						document.getElementById("Advanced_div").removeAttribute("hidden");
 						document.getElementById("EEPROM_USB_SERIAL_div").removeAttribute("hidden");
