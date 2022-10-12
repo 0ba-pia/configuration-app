@@ -461,14 +461,15 @@ function onResetDefaults( event ) {
 	document.getElementById("octave").selectedIndex = 3;
 	document.getElementById("transpose").selectedIndex = 12;
 	document.getElementById("EEPROM_RELEASE_VELOCITY").checked = 0;
-	let select = document.getElementById("knob0").querySelector("#knobmode");
+	let select;
+	select = document.getElementById("knob0").querySelector("#knobmode");
 	select.selectedIndex = 1;
 	select.dispatchEvent(new Event('change'));
 	document.getElementById("knob0").querySelector("#knobcontrol").value = 7;
 	select = document.getElementById("knob1").querySelector("#knobmode");
-	select.selectedIndex = 0;
+	select.selectedIndex = 1;
+	document.getElementById("knob1").querySelector("#knobcontrol").value = 91;
 	select.dispatchEvent(new Event('change'));
-	document.getElementById("knob1").querySelector("#knobcontrol").value = 0;
 	document.getElementById("butmode0").selectedIndex = 2;
 	document.getElementById("butcontrol0").value = 1;
 	document.getElementById("butmode1").selectedIndex = 1;
@@ -864,6 +865,6 @@ initVelocityCanvas();
 });
 
 </script>
-<div style="color : lightgrey;">v1.11.1</div>
+<div style="color : lightgrey;">v1.12.0</div>
  </body>
 </html>
