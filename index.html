@@ -243,6 +243,10 @@ button, input, optgroup, select, textarea {
 						<input type="checkbox" id="EEPROM_USB_SERIAL">
 			  			<label for="enabled"> USB Serial enabled</label><br>
 		  			</div>
+		  			<div id="EEPROM_DISABLE_SOUNDBOARD_div" hidden>
+						<input type="checkbox" id="EEPROM_DISABLE_SOUNDBOARD">
+			  			<label for="enabled"> Soundboard OFF</label><br>
+		  			</div>
 			  	</div>
 			</div>
 		</div>
@@ -320,6 +324,7 @@ const EEPROM_BTNMODE3 = 36;
 const EEPROM_BTNCTRL3 = 37;
 const EEPROM_RELEASE_VELOCITY = 38;
 const EEPROM_USB_SERIAL = 39;
+const EEPROM_DISABLE_SOUNDBOARD = 40;
 const EEPROM_SERIAL = 125;
 const EEPROM_FIRMWARE = 126;
 const MANUFACTURER_MIDI_ID = 0x20;
@@ -479,6 +484,7 @@ function onResetDefaults( event ) {
 	document.getElementById("butmode3").selectedIndex = 1;
 	document.getElementById("butcontrol3").value = 0;
 	document.getElementById("EEPROM_USB_SERIAL").checked = 0;
+	document.getElementById("EEPROM_DISABLE_SOUNDBOARD").checked = 0;
 }
 
 function onReboot( event ) {
@@ -513,6 +519,7 @@ function loadFromKeyboard() {
 	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_KNOBMODE0);
 	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_BTNMODE0);
 	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_USB_SERIAL);	
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_DISABLE_SOUNDBOARD);	
 }
 
 function onSubmit( event ) {
@@ -563,6 +570,10 @@ function onSubmit( event ) {
 	// usb serial
 	sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_USB_SERIAL, [document.getElementById("EEPROM_USB_SERIAL").checked]);
 	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_USB_SERIAL);
+	
+	// soundboard
+	sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_DISABLE_SOUNDBOARD, [document.getElementById("EEPROM_DISABLE_SOUNDBOARD").checked]);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_DISABLE_SOUNDBOARD);
 
 	alert("Keyboard configuration updated");
 }
@@ -661,11 +672,12 @@ function onMIDIMessage( event ) {
 					document.getElementById("EEPROM_RELEASE_VELOCITY").checked = v;
 					break;
 				case EEPROM_FIRMWARE:
-					var f = String.fromCharCode(values[0]);
+					var v0 = String.fromCharCode(values[0]);
 					var v1 = parseInt(String.fromCharCode(values[1]));
 					var v2 = parseInt(String.fromCharCode(values[2]));
 					var v3 = parseInt(String.fromCharCode(values[3]));
 					var v4 = parseInt(String.fromCharCode(values[4]));
+					var f = v0;
 					f += v1 + ".";
 					f += v2 + ".";
 					f += v3 + ".";
@@ -696,6 +708,11 @@ function onMIDIMessage( event ) {
 					if (firmwareVersion >= 2850) {
 						document.getElementById("Advanced_div").removeAttribute("hidden");
 						document.getElementById("EEPROM_USB_SERIAL_div").removeAttribute("hidden");
+						if (v0 === 'r') {
+							document.getElementById("EEPROM_DISABLE_SOUNDBOARD_div").removeAttribute("hidden");
+						} else {
+							document.getElementById("EEPROM_DISABLE_SOUNDBOARD_div").setAttribute("hidden", true);
+						}
 					} else {
 						document.getElementById("Advanced_div").setAttribute("hidden", true);
 						document.getElementById("EEPROM_USB_SERIAL_div").setAttribute("hidden", true);
@@ -746,6 +763,9 @@ function onMIDIMessage( event ) {
 					break;
 				case EEPROM_USB_SERIAL:
 					document.getElementById("EEPROM_USB_SERIAL").checked = v;
+					break;
+				case EEPROM_DISABLE_SOUNDBOARD:
+					document.getElementById("EEPROM_DISABLE_SOUNDBOARD").checked = v;
 					break;
 				}
 			}
@@ -865,6 +885,6 @@ initVelocityCanvas();
 });
 
 </script>
-<div style="color : lightgrey;">v1.12.0</div>
+<div style="color : lightgrey;">v1.13.0</div>
  </body>
 </html>
