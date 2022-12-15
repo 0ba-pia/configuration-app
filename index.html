@@ -194,6 +194,7 @@ button, input, optgroup, select, textarea {
 					  <option value="1">Program shift</option>
 					  <option value="2">Octave shift</option>
 					  <option value="3">Program select</option>
+					  <option value="4">Transpose</option>
 					</select>
 					Control number :
 					<input id="butcontrol1" type="text" maxlength="3" size="3" disabled>
@@ -206,6 +207,7 @@ button, input, optgroup, select, textarea {
 					  <option value="1">Program shift</option>
 					  <option value="2">Octave shift</option>
 					  <option value="3">Program select</option>
+					  <option value="4">Transpose</option>
 					</select>
 					Control number :
 					<input id="butcontrol0" type="text" maxlength="3" size="3" disabled>
@@ -218,6 +220,7 @@ button, input, optgroup, select, textarea {
 					  <option value="1">Program shift</option>
 					  <option value="2">Octave shift</option>
 					  <option value="3">Program select</option>
+					  <option value="4">Transpose</option>
 					</select>
 					Control number :
 					<input id="butcontrol3" type="text" maxlength="3" size="3" disabled>
@@ -230,6 +233,7 @@ button, input, optgroup, select, textarea {
 					  <option value="1">Program shift</option>
 					  <option value="2">Octave shift</option>
 					  <option value="3">Program select</option>
+					  <option value="4">Transpose</option>
 					</select>
 					Control number :
 					<input id="butcontrol2" type="text" maxlength="3" size="3" disabled>
@@ -689,6 +693,12 @@ function onMIDIMessage( event ) {
 						document.getElementById("expert").removeAttribute("hidden");
 					}
 					// display compatible features
+					if (firmwareVersion < 2930) {
+						for (var i=0; i<4; i++) {
+							let butMode = document.getElementById("butmode"+i);
+							butMode.remove(4);
+						}
+					} 
 					if (firmwareVersion >= 2910) {
 						for (var i=0; i<2; i++) {
 							let knobMode = document.getElementById("knob"+i).querySelector("#knobmode");
@@ -885,6 +895,6 @@ initVelocityCanvas();
 });
 
 </script>
-<div style="color : lightgrey;">v1.13.0</div>
+<div style="color : lightgrey;">v1.14.0</div>
  </body>
 </html>
