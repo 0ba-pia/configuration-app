@@ -718,7 +718,7 @@ function onMIDIMessage( event ) {
 					if (firmwareVersion >= 2850) {
 						document.getElementById("Advanced_div").removeAttribute("hidden");
 						document.getElementById("EEPROM_USB_SERIAL_div").removeAttribute("hidden");
-						if (v0 === 'r') {
+						if (v0 >= 'r') {
 							document.getElementById("EEPROM_DISABLE_SOUNDBOARD_div").removeAttribute("hidden");
 						} else {
 							document.getElementById("EEPROM_DISABLE_SOUNDBOARD_div").setAttribute("hidden", true);
@@ -895,6 +895,6 @@ initVelocityCanvas();
 });
 
 </script>
-<div style="color : lightgrey;">v1.14.0</div>
+<div style="color : lightgrey;">v1.14.1</div>
  </body>
 </html>
