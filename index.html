@@ -268,10 +268,10 @@ button, input, optgroup, select, textarea {
 			Click and drag to draw a custom curve or select a preset below<br>
 			  <button type="button" id="vel1">1 - Linear</button><br>
 			  <button type="button" id="vel2">2 - Compressed</button><br>
-			  <button type="button" id="vel3">3 - Medium (default)</button><br>
+			  <button type="button" id="vel3">3 - Medium</button><br>
 			  <button type="button" id="vel4">4 - Compressor/Expander</button><br>
 			  <button type="button" id="vel5">5 - Low velocity 1</button><br>
-			  <button type="button" id="vel6">6 - Low velocity 2</button><br>
+			  <button type="button" id="vel6">6 - Low velocity 2 (default)</button><br>
 			  <button type="button" id="vel7">7 - Compressed top and bottom</button><br>
 			  <button type="button" id="vel8">8 - Full velocity</button>
 			</div>
@@ -464,7 +464,7 @@ function onChangeKnobMode( event ) {
 
 function onResetDefaults( event ) {
 	event.preventDefault();
-	selectVelocity(2);
+	selectVelocity(5);
 	document.getElementById("sustain").selectedIndex = 1;
 	document.getElementById("channel").selectedIndex = 0;
 	document.getElementById("octave").selectedIndex = 3;
@@ -895,6 +895,6 @@ initVelocityCanvas();
 });
 
 </script>
-<div style="color : lightgrey;">v1.14.1</div>
+<div style="color : lightgrey;">v1.15</div>
  </body>
 </html>
