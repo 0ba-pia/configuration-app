@@ -156,6 +156,36 @@ button, input, optgroup, select, textarea {
   </div>
 
   <div class="section" id="controlpanel" hidden>
+  
+  			<div id="joystick" hidden>
+			<b>
+			Joystick
+			</b>
+
+				<div id="joystick_vry">
+					Horizontal
+					<select id="knobmode" disabled>
+					  <option value="0">Unassigned</option>
+					  <option value="1">Control Change</option>
+					  <option value='2'>Pitch Bend</option>
+					  <option value="3">Aftertouch</option>
+					</select>
+					<span id="cc-number">Control Number</span>
+					<input id="knobcontrol" type="text" maxlength="3" size="3">
+				</div>
+
+				<div id="joystick_vrx">
+					Vertical
+					<select id="knobmode" disabled>
+					  <option value="0">Unassigned</option>
+					  <option value="1">Control Change</option>
+					  <option value='2'>Pitch Bend</option>
+					  <option value="3">Aftertouch</option>
+					</select>
+					<span id="cc-number">Control Number</span>
+					<input id="knobcontrol" type="text" maxlength="3" size="3">
+				</div>
+			</div>
 
 		    <b>
 			Knobs
@@ -252,6 +282,7 @@ button, input, optgroup, select, textarea {
 			  			<label for="enabled"> Soundboard OFF</label><br>
 		  			</div>
 			  	</div>
+				
 			</div>
 		</div>
 
@@ -329,6 +360,10 @@ const EEPROM_BTNCTRL3 = 37;
 const EEPROM_RELEASE_VELOCITY = 38;
 const EEPROM_USB_SERIAL = 39;
 const EEPROM_DISABLE_SOUNDBOARD = 40;
+const EEPROM_JOYSTICK_VRX_MODE = 41;
+const EEPROM_JOYSTICK_VRX_CTRL = 42;
+const EEPROM_JOYSTICK_VRY_MODE = 43;
+const EEPROM_JOYSTICK_VRY_CTRL = 44;
 const EEPROM_SERIAL = 125;
 const EEPROM_FIRMWARE = 126;
 const MANUFACTURER_MIDI_ID = 0x20;
@@ -406,6 +441,9 @@ function listInputsAndOutputs( midiAccess ) {
 
 							document.getElementById("knob0").querySelector("#knobmode").addEventListener('change', onChangeKnobMode);
 							document.getElementById("knob1").querySelector("#knobmode").addEventListener('change', onChangeKnobMode);
+							
+							document.getElementById("joystick_vrx").querySelector("#knobmode").addEventListener('change', onChangeKnobMode);
+							document.getElementById("joystick_vry").querySelector("#knobmode").addEventListener('change', onChangeKnobMode);
 
 							loadFromKeyboard();
 							
@@ -463,6 +501,7 @@ function onChangeKnobMode( event ) {
 }
 
 function onResetDefaults( event ) {
+	let select;
 	event.preventDefault();
 	selectVelocity(5);
 	document.getElementById("sustain").selectedIndex = 1;
@@ -470,7 +509,7 @@ function onResetDefaults( event ) {
 	document.getElementById("octave").selectedIndex = 3;
 	document.getElementById("transpose").selectedIndex = 12;
 	document.getElementById("EEPROM_RELEASE_VELOCITY").checked = 0;
-	let select;
+	// knobs
 	select = document.getElementById("knob0").querySelector("#knobmode");
 	select.selectedIndex = 1;
 	select.dispatchEvent(new Event('change'));
@@ -479,6 +518,16 @@ function onResetDefaults( event ) {
 	select.selectedIndex = 1;
 	document.getElementById("knob1").querySelector("#knobcontrol").value = 91;
 	select.dispatchEvent(new Event('change'));
+	// joystick
+	select = document.getElementById("joystick_vrx").querySelector("#knobmode");
+	select.selectedIndex = 0;
+	select.dispatchEvent(new Event('change'));
+	document.getElementById("joystick_vrx").querySelector("#knobcontrol").value = 0;
+	select = document.getElementById("joystick_vry").querySelector("#knobmode");
+	select.selectedIndex = 2;
+	document.getElementById("joystick_vry").querySelector("#knobcontrol").value = 2;
+	select.dispatchEvent(new Event('change'));
+	// buttons
 	document.getElementById("butmode0").selectedIndex = 2;
 	document.getElementById("butcontrol0").value = 1;
 	document.getElementById("butmode1").selectedIndex = 1;
@@ -487,6 +536,7 @@ function onResetDefaults( event ) {
 	document.getElementById("butcontrol2").value = 0;
 	document.getElementById("butmode3").selectedIndex = 1;
 	document.getElementById("butcontrol3").value = 0;
+	// other
 	document.getElementById("EEPROM_USB_SERIAL").checked = 0;
 	document.getElementById("EEPROM_DISABLE_SOUNDBOARD").checked = 0;
 }
@@ -524,6 +574,8 @@ function loadFromKeyboard() {
 	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_BTNMODE0);
 	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_USB_SERIAL);	
 	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_DISABLE_SOUNDBOARD);	
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_JOYSTICK_VRX_MODE);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_JOYSTICK_VRY_MODE);
 }
 
 function onSubmit( event ) {
@@ -561,6 +613,19 @@ function onSubmit( event ) {
 	}
 	sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_KNOBMODE0, values);
 	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_KNOBMODE0);
+	
+	// joystick
+	values = [];
+	values.push(document.getElementById("joystick_vrx").querySelector("#knobmode").value);
+	values.push(document.getElementById("joystick_vrx").querySelector("#knobcontrol").value);
+	sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_JOYSTICK_VRX_MODE, values);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_JOYSTICK_VRX_MODE);
+	values = [];
+	values.push(document.getElementById("joystick_vry").querySelector("#knobmode").value);
+	values.push(document.getElementById("joystick_vry").querySelector("#knobcontrol").value);
+	sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_JOYSTICK_VRY_MODE, values);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_JOYSTICK_VRY_MODE);
+	
 
 	// switches
 	values = [];
@@ -711,6 +776,9 @@ function onMIDIMessage( event ) {
 							knobMode.insertAdjacentHTML("beforeend","<option value='2'>Pitch Bend</option>");
 							knobMode.insertAdjacentHTML("beforeend","<option value='3'>Aftertouch</option>");
 						}
+						if ((v0 === 'v') || (v0 === 'w')){
+							document.getElementById("joystick").removeAttribute("hidden");
+						}
 					} else {
 						document.getElementById("Advanced_div").setAttribute("hidden", true);
 						document.getElementById("EEPROM_USB_SERIAL_div").setAttribute("hidden", true);
@@ -759,6 +827,26 @@ function onMIDIMessage( event ) {
 						}
 					}
 					break;
+				case EEPROM_JOYSTICK_VRX_MODE:
+					{
+						var mode = values[0];
+						var cc = values[1];
+						document.getElementById("joystick_vrx").querySelector("#knobcontrol").value = cc;
+						let select = document.getElementById("joystick_vrx").querySelector("#knobmode");
+						select.selectedIndex = mode;
+						select.dispatchEvent(new Event('change'));
+						break;
+					}
+				case EEPROM_JOYSTICK_VRY_MODE:
+					{
+						var mode = values[0];
+						var cc = values[1];
+						document.getElementById("joystick_vry").querySelector("#knobcontrol").value = cc;
+						let select = document.getElementById("joystick_vry").querySelector("#knobmode");
+						select.selectedIndex = mode;
+						select.dispatchEvent(new Event('change'));
+						break;
+					}
 				case EEPROM_BTNMODE0:
 					if (values.length > 2) {
 						var idx = 0;
@@ -895,6 +983,6 @@ initVelocityCanvas();
 });
 
 </script>
-<div style="color : lightgrey;">v1.15</div>
+<div style="color : lightgrey;">v1.2</div>
  </body>
 </html>
