@@ -50,16 +50,15 @@ button, input, optgroup, select, textarea {
 			MIDI : <span id="midiEvent"></span> <span id="midiValue"></span> <span id="midiValue1"></span>
 		</div>
 		<hr>
-		  <h2>Configuration</h2>
+		  <h2>General Configuration</h2>
     </div>
   </div>
 
 
     <div class="row">
-    <div class="col-lg-6 col-sm-12">
-  <form id="form">
-  
-
+    	<div class="col-lg-6 col-sm-12">
+ 		<form id="form">
+ 
 			<b>
 			MIDI Channel
 			</b>
@@ -84,8 +83,6 @@ button, input, optgroup, select, textarea {
 				  <option value="15">16</option>
 				</select>
 			</div>
-
-  
 
 		<b>
 		Sustain Pedal
@@ -754,7 +751,9 @@ function onMIDIMessage( event ) {
 					var firmwareVersion = v1*1000+v2*100+v3*10+v4;
 					document.getElementById("firmware").innerHTML = f;
 					
-					if (searchParams.has('expert')) {
+					var expertMode = searchParams.has('expert');
+					
+					if (expertMode) {
 						document.getElementById("expert").removeAttribute("hidden");
 					}
 					// display compatible features
@@ -785,7 +784,9 @@ function onMIDIMessage( event ) {
 					}
 					if (firmwareVersion >= 2850) {
 						document.getElementById("Advanced_div").removeAttribute("hidden");
-						document.getElementById("EEPROM_USB_SERIAL_div").removeAttribute("hidden");
+						if (expertMode) { 
+							document.getElementById("EEPROM_USB_SERIAL_div").removeAttribute("hidden");
+						}	
 						if (v0 >= 'r') {
 							document.getElementById("EEPROM_DISABLE_SOUNDBOARD_div").removeAttribute("hidden");
 						} else {
