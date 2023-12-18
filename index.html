@@ -375,8 +375,20 @@ const ACTION_WRITE = 0x12;
 const ACTION_EXECUTE = 0x13;
 
 var selfTestNoteOn = false;
-
-
+var pianoDeVoyage;
+let searchParams = new URLSearchParams(window.location.search);
+var velCurveConfig = [];
+var velCurves = [
+	{name:"1 - Linear", points : [[0,127], [127,0], [127,0], [127,0], [127,0],[127,0], [127,0], [127,0], [127,0], [127,0]]},
+	{name:"2 - Compressed", points : [[0,127],[24, 118], [52, 101], [102, 42], [127,0], [127,0],[127,0], [127,0], [127,0], [127,0]]},
+	{name:"3 - Medium", points : [[0,127],[11, 98],[27, 74],[62, 65],[97, 57],[116, 21],[121, 5],[127,0], [127,0], [127,0],]},
+	{name:"4 - Compressor/Expander", points : [[0,127],[1, 114],[12, 104],[100, 94],[116, 55],[122, 5], [127,0], [127,0], [127,0], [127,0]]},
+	{name:"5 - Low velocity 1", points : [[0,127],[6, 120],[30, 120],[53, 112],[81, 89],[102, 59],[113, 30],[119, 5], [127,0], [127,0]]},
+	{name:"6 - Low velocity 2", points : [[0,127],[9, 116],[45, 116],[62, 110],[83, 95],[100, 73],[113, 44],[120, 6], [127,0], [127,0]]},
+	{name:"7 - Compressed top and bottom", points : [[0,127],[5, 104],[47, 94],[77, 82],[99, 66],[115, 45],[120, 34],[122, 5], [127,0], [127,0]]},
+	{name:"8 - Full velocity", points : [[0,0], [127,0], [127,0], [127,0], [127,0], [127,0], [127,0], [127,0], [127,0], [127,0]]}
+	];
+var midiFileBuffer = [];
 
 function onMIDISuccess( midiAccess ) {
 	console.log( "MIDI ready!" );
@@ -399,9 +411,6 @@ if (navigator.requestMIDIAccess) {
 } else {
 	onMIDIFailure("");
 }
-
-var pianoDeVoyage;
-let searchParams = new URLSearchParams(window.location.search);
 
 function listInputsAndOutputs( midiAccess ) {
 	pianoDeVoyage = null;
@@ -707,8 +716,12 @@ function onMIDIMessage( event ) {
 			break;
 	}
 	if (event.data[0] == 0xF0) {
-		// make sure this is a write event
-		if (event.data[4] === ACTION_WRITE) {
+		// SYSEX event		
+		const SYSEX_START = 0x10;
+		const SYSEX_ACTION = 0x42;
+		
+		if (event.data[2] === SYSEX_START && event.data[3] === SYSEX_ACTION && event.data[4] === ACTION_WRITE) {
+			// this is a write event
 			v = event.data[6];
 			var values = readSysExValues(event.data);
 			switch(event.data[5]) {
@@ -867,10 +880,51 @@ function onMIDIMessage( event ) {
 					document.getElementById("EEPROM_DISABLE_SOUNDBOARD").checked = v;
 					break;
 				}
+			} else {
+				// Get the message body (without the Sysex start and end) and decode it
+				var sysExBody = event.data.slice(1,event.data.length-1);
+				console.log(sysExBody);
+				var sysExBodyMsg = decodeSysEx(sysExBody);
+				console.log(sysExBodyMsg);
+				const SYSEX_MIDI_FILE_HEADER = [0x4D,0x54,0x68,0x64,0x00,0x00,0x00];
+				hasMidiFileHeader = true;
+				i=0;
+				while (hasMidiFileHeader && i<SYSEX_MIDI_FILE_HEADER.length) {
+					if (sysExBodyMsg[i] !== SYSEX_MIDI_FILE_HEADER[i]) {
+						hasMidiFileHeader = false;
+					}
+					i++;
+				}
+				if (hasMidiFileHeader) {
+					console.log("hasMidiFileHeader");
+					midiFileBuffer = [sysExBodyMsg];
+				} else if (midiFileBuffer.length === 0) {
+					// unknown sysex message
+					console.log("Unknown sysex message");
+				} else {
+					// continue appending the file buffer
+					midiFileBuffer.push(sysExBodyMsg);
+				}
+				if ((midiFileBuffer.length > 0) && (sysExBodyMsg.length < 112)) {
+					// end for midi file
+					createMidiFile();
+					midiFileBuffer = [];
+				}
 			}
 		}
 		
 }
+
+function createMidiFile() {
+  const blob = new Blob(midiFileBuffer, { type: 'audio/midi' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'generated_midi.mid';
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 
 function readSysExValues(buffer) {
 	var v, v2;
@@ -903,17 +957,53 @@ function sendSysEx( output , action, addr, values) {
 	output.send( buffer);
 }
 
-var velCurveConfig = [];
-var velCurves = [
-	{name:"1 - Linear", points : [[0,127], [127,0], [127,0], [127,0], [127,0],[127,0], [127,0], [127,0], [127,0], [127,0]]},
-	{name:"2 - Compressed", points : [[0,127],[24, 118], [52, 101], [102, 42], [127,0], [127,0],[127,0], [127,0], [127,0], [127,0]]},
-	{name:"3 - Medium", points : [[0,127],[11, 98],[27, 74],[62, 65],[97, 57],[116, 21],[121, 5],[127,0], [127,0], [127,0],]},
-	{name:"4 - Compressor/Expander", points : [[0,127],[1, 114],[12, 104],[100, 94],[116, 55],[122, 5], [127,0], [127,0], [127,0], [127,0]]},
-	{name:"5 - Low velocity 1", points : [[0,127],[6, 120],[30, 120],[53, 112],[81, 89],[102, 59],[113, 30],[119, 5], [127,0], [127,0]]},
-	{name:"6 - Low velocity 2", points : [[0,127],[9, 116],[45, 116],[62, 110],[83, 95],[100, 73],[113, 44],[120, 6], [127,0], [127,0]]},
-	{name:"7 - Compressed top and bottom", points : [[0,127],[5, 104],[47, 94],[77, 82],[99, 66],[115, 45],[120, 34],[122, 5], [127,0], [127,0]]},
-	{name:"8 - Full velocity", points : [[0,0], [127,0], [127,0], [127,0], [127,0], [127,0], [127,0], [127,0], [127,0], [127,0]]}
-	];
+function decodeSysEx(inSysEx) {
+    msbStorage = 0;
+    byteIndex  = 0;
+    outData = [];
+
+    for (i=0; i<=inSysEx.length; i++) {
+        if (i % 8 == 0) {
+            msbStorage = inSysEx[i];
+            byteIndex = 6;
+        } else {
+            body = inSysEx[i];
+            msb = ((msbStorage >> byteIndex) & 1) << 7;
+            byteIndex -= 1;
+            outData.push(msb | body);
+         }  
+    }
+    output = new Uint8Array(outData);
+    return output;
+}
+
+function decodeSysEx2(inSysEx,
+                     inFlipHeaderBits) {
+	const inputLength = inSysEx.length;
+	const outputLength = Math.ceil(inputLength * (7/8));
+  	const output = new Uint8Array(outputLength);
+  	
+     var count  = 0;
+     msbStorage = 0;
+     byteIndex  = 0;
+  	 
+     for (i = 0; i < inputLength; ++i) {
+         if ((i % 8) == 0)
+         {
+             msbStorage = inSysEx[i];
+             byteIndex  = 6;
+         }
+         else
+         {
+             body     = inSysEx[i];
+             shift    = inFlipHeaderBits ? 6 - byteIndex : byteIndex;
+             msb      = ((msbStorage >> shift) & 1) << 7;
+             byteIndex--;
+             output[count++] = msb | body;
+         }
+     }
+     return output;
+}
 
 function drawVelocityCurve() {
 	var canvas = document.getElementById("velocity-canvas");
@@ -984,6 +1074,6 @@ initVelocityCanvas();
 });
 
 </script>
-<div style="color : lightgrey;">v1.2</div>
+<div style="color : lightgrey;">v1.3</div>
  </body>
 </html>
