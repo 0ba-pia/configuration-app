@@ -322,6 +322,8 @@ button, input, optgroup, select, textarea {
 		<div class="col">
 			<input id="reboot" type="submit" class="btn" value="Reboot keyboard" disabled>
 			<input id="selfTest" type="submit" class="btn" value="Self Test keyboard" disabled>
+			<input id="writeBuffer" type="submit" class="btn" value="Write MIDI buffer" disabled>
+			<input id="saveMidiFile" type="submit" class="btn" value="Download MIDI file" disabled>
 		</div>
 	</div>
 </form>
@@ -363,6 +365,9 @@ const EEPROM_JOYSTICK_VRY_MODE = 43;
 const EEPROM_JOYSTICK_VRY_CTRL = 44;
 const EEPROM_SERIAL = 125;
 const EEPROM_FIRMWARE = 126;
+const EEPROM_DUMP_MIDIFILE = 124;
+const EEPROM_SAVE_MIDIBUFFER  = 123;
+
 const MANUFACTURER_MIDI_ID = 0x20;
 const NOTE_ON = 0x90;
 const NOTE_OFF = 0x80;
@@ -458,6 +463,8 @@ function listInputsAndOutputs( midiAccess ) {
 							document.getElementById("load").addEventListener("click", onLoadFromKeyboard);
 							document.getElementById("reboot").addEventListener("click", onReboot);
 							document.getElementById("selfTest").addEventListener("click", selfTest);
+							document.getElementById("writeBuffer").addEventListener("click", writeBuffer);
+							document.getElementById("saveMidiFile").addEventListener("click", saveMidiFile);
 							
 						} else {
 							// will trigger a state change event
@@ -560,6 +567,16 @@ function selfTest( event ) {
 		pianoDeVoyage.send([0x90, 60, 0x7f]);
 	}
 	selfTestNoteOn = !selfTestNoteOn;
+}
+
+function writeBuffer( event ) {
+	event.preventDefault();
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_SAVE_MIDIBUFFER);
+}
+
+function saveMidiFile( event ) {
+	event.preventDefault();
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_DUMP_MIDIFILE);
 }
 
 function onLoadFromKeyboard( event ) {
@@ -920,7 +937,7 @@ function createMidiFile() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'generated_midi.mid';
+  link.download = 'voyage.mid';
   link.click();
   URL.revokeObjectURL(url);
 }
