@@ -322,8 +322,10 @@ button, input, optgroup, select, textarea {
 		<div class="col">
 			<input id="reboot" type="submit" class="btn" value="Reboot keyboard" disabled>
 			<input id="selfTest" type="submit" class="btn" value="Self Test keyboard" disabled>
+			<span id="midirecorder" hidden>
 			<input id="writeBuffer" type="submit" class="btn" value="Write MIDI buffer" disabled>
 			<input id="saveMidiFile" type="submit" class="btn" value="Download MIDI file" disabled>
+			</span>
 		</div>
 	</div>
 </form>
@@ -787,6 +789,9 @@ function onMIDIMessage( event ) {
 						document.getElementById("expert").removeAttribute("hidden");
 					}
 					// display compatible features
+					if (firmwareVersion >= 2970) {
+							document.getElementById("midirecorder").removeAttribute("hidden");
+					} 
 					if (firmwareVersion < 2930) {
 						for (var i=0; i<4; i++) {
 							let butMode = document.getElementById("butmode"+i);
