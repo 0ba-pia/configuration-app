@@ -46,8 +46,9 @@ button, input, optgroup, select, textarea {
 
 		<div id="device">
 			Device connected : <span id="device-name"></span> <br>
+			Model : <span id="model-name"></span> <br>
 			Firmware version : <span id="firmware"></span><br>
-			MIDI : <span id="midiEvent"></span> <span id="midiValue"></span> <span id="midiValue1"></span>
+			MIDI Event : <span id="midiEvent"></span> <span id="midiValue"></span> <span id="midiValue1"></span>
 		</div>
 		<hr>
 		  <h2>General Configuration</h2>
@@ -775,20 +776,49 @@ function onMIDIMessage( event ) {
 					var v2 = parseInt(String.fromCharCode(values[2]));
 					var v3 = parseInt(String.fromCharCode(values[3]));
 					var v4 = parseInt(String.fromCharCode(values[4]));
-					var f = v0;
-					f += v1 + ".";
+					var f = v1 + ".";
 					f += v2 + ".";
 					f += v3 + ".";
 					f += v4;
-					var firmwareVersion = v1*1000+v2*100+v3*10+v4;
 					document.getElementById("firmware").innerHTML = f;
 					
-					var expertMode = searchParams.has('expert');
+					// model name
+					var modelName;
+					switch(v0) {
+						case "v" :
+							modelName = "V2DJ24";
+							break;
+						case "w" :
+							modelName = "V2DJ15";
+							break;
+						case "u" :
+							modelName = "V2C24K2";
+							break;
+						case "s" :
+							modelName = "V2C24K1";
+							break;
+						case "r" :
+							modelName = "V2C15K2";
+							break;
+						case "n" :
+							modelName = "V2C15K1";
+							break;
+						case "o" :
+							modelName = "V2A";
+							break;
+						default :
+							modelName = "V2";
+					}
+					document.getElementById("model-name").innerHTML = modelName;
 					
+					// expert mode
+					var expertMode = searchParams.has('expert');
 					if (expertMode) {
 						document.getElementById("expert").removeAttribute("hidden");
 					}
+					
 					// display compatible features
+					var firmwareVersion = v1*1000+v2*100+v3*10+v4;
 					if (firmwareVersion >= 2970) {
 							document.getElementById("midirecorder").removeAttribute("hidden");
 					} 
