@@ -319,13 +319,6 @@ button, input, optgroup, select, textarea {
 		</div>
 	</div>
 	
-	<div class="row" id="expert" hidden>
-		<div class="col">
-			<input id="reboot" type="submit" class="btn btn-primary" value="Reboot keyboard" disabled>
-			<input id="selfTest" type="submit" class="btn btn-primary" value="Self Test keyboard" disabled>
-		</div>
-	</div>
-	
 	<hr>
 	
 	<div class="row" id="midirecorder" hidden>
@@ -335,7 +328,17 @@ button, input, optgroup, select, textarea {
 			<input id="saveMidiFile" type="submit" class="btn btn-primary" value="Download last session" disabled>
 		</div>
   	</div>
-			  	
+  	
+  	<hr>
+			  
+    <div class="row" id="expert" hidden>
+        <div class="col">
+            <h2>Expert</h2>
+            <input id="reboot" type="submit" class="btn btn-primary" value="Reboot keyboard" disabled>
+            <input id="selfTest" type="submit" class="btn btn-primary" value="Self Test keyboard" disabled>
+            <input id="deleteAllMidiFiles" type="submit" class="btn btn-danger" value="Delete all saved sessions" disabled>
+        </div>
+    </div>	
 	
 </form>
 
@@ -378,6 +381,7 @@ const EEPROM_SERIAL = 125;
 const EEPROM_FIRMWARE = 126;
 const EEPROM_DUMP_MIDIFILE = 124;
 const EEPROM_SAVE_MIDIBUFFER  = 123;
+const EEPROM_DELETE_MIDIFILES = 122;
 
 const MANUFACTURER_MIDI_ID = 0x20;
 const NOTE_ON = 0x90;
@@ -476,6 +480,7 @@ function listInputsAndOutputs( midiAccess ) {
 							document.getElementById("selfTest").addEventListener("click", selfTest);
 							document.getElementById("writeBuffer").addEventListener("click", writeBuffer);
 							document.getElementById("saveMidiFile").addEventListener("click", saveMidiFile);
+							document.getElementById("deleteAllMidiFiles").addEventListener("click", deleteAllMidiFiles);
 							
 						} else {
 							// will trigger a state change event
@@ -582,12 +587,17 @@ function selfTest( event ) {
 
 function writeBuffer( event ) {
 	event.preventDefault();
-	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_SAVE_MIDIBUFFER);
+	sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_SAVE_MIDIBUFFER);
+}
+
+function deleteAllMidiFiles( event ) {
+    event.preventDefault();
+    sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_DELETE_MIDIFILES);
 }
 
 function saveMidiFile( event ) {
 	event.preventDefault();
-	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_DUMP_MIDIFILE);
+	sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_DUMP_MIDIFILE);
 }
 
 function onLoadFromKeyboard( event ) {
