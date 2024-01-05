@@ -47,11 +47,12 @@ button, input, optgroup, select, textarea {
 
 		<div id="device">
 			Device connected : <span id="device-name"></span> <br>
+			Model : <span id="model-name"></span> <br>
 			Firmware version : <span id="firmware"></span><br>
-			MIDI : <span id="midiEvent"></span> <span id="midiValue"></span> <span id="midiValue1"></span>
+			MIDI Event : <span id="midiEvent"></span> <span id="midiValue"></span> <span id="midiValue1"></span>
 		</div>
 		<hr>
-		  <h2>General Configuration</h2>
+		<h2>Configuration</h2>
     </div>
   </div>
 
@@ -266,7 +267,6 @@ button, input, optgroup, select, textarea {
 					Control number :
 					<input id="butcontrol2" type="text" maxlength="3" size="3" disabled>
 				</div>
-					
 				<div id="Advanced_div" hidden>
 					<b>
 					Advanced
@@ -277,13 +277,13 @@ button, input, optgroup, select, textarea {
 		  			</div>
 		  			<div id="EEPROM_DISABLE_SOUNDBOARD_div" hidden>
 						<input type="checkbox" id="EEPROM_DISABLE_SOUNDBOARD">
-			  			<label for="enabled"> Soundboard OFF</label><br>
+			  			<label for="enabled"> Turn Soundboard OFF</label><br>
 		  			</div>
 			  	</div>
+			  	
 				
 			</div>
 		</div>
-
 
 	    <div class="col-lg-6 col-sm-12">
 			<b>
@@ -319,12 +319,27 @@ button, input, optgroup, select, textarea {
 			<input id="update" type="submit" class="btn btn-warning" value="Send to keyboard" disabled>
 		</div>
 	</div>
-	<div class="row" id="expert" hidden>
+	
+	<hr>
+	
+	<div class="row" id="midirecorder" hidden>
 		<div class="col">
-			<input id="reboot" type="submit" class="btn" value="Reboot keyboard" disabled>
-			<input id="selfTest" type="submit" class="btn" value="Self Test keyboard" disabled>
+			<h2>Recording</h2>
+			<input id="writeBuffer" type="submit" class="btn btn-primary" value="Save current session" disabled>
+			<input id="saveMidiFile" type="submit" class="btn btn-primary" value="Download last session" disabled>
 		</div>
-	</div>
+  	</div>
+			  
+    <div class="row" id="expert" hidden>
+        <div class="col">
+                <hr>
+            <h2>Expert</h2>
+            <input id="reboot" type="submit" class="btn btn-primary" value="Reboot keyboard" disabled>
+            <input id="selfTest" type="submit" class="btn btn-primary" value="Self Test keyboard" disabled>
+            <input id="deleteAllMidiFiles" type="submit" class="btn btn-danger" value="Delete all saved sessions" disabled>
+        </div>
+    </div>	
+	
 </form>
 
 <!-- Optional JavaScript -->
@@ -364,6 +379,10 @@ const EEPROM_JOYSTICK_VRY_MODE = 43;
 const EEPROM_JOYSTICK_VRY_CTRL = 44;
 const EEPROM_SERIAL = 125;
 const EEPROM_FIRMWARE = 126;
+const EEPROM_DUMP_MIDIFILE = 124;
+const EEPROM_SAVE_MIDIBUFFER  = 123;
+const EEPROM_DELETE_MIDIFILES = 122;
+
 const MANUFACTURER_MIDI_ID = 0x20;
 const NOTE_ON = 0x90;
 const NOTE_OFF = 0x80;
@@ -376,8 +395,20 @@ const ACTION_WRITE = 0x12;
 const ACTION_EXECUTE = 0x13;
 
 var selfTestNoteOn = false;
-
-
+var pianoDeVoyage;
+let searchParams = new URLSearchParams(window.location.search);
+var velCurveConfig = [];
+var velCurves = [
+	{name:"1 - Linear", points : [[0,127], [127,0], [127,0], [127,0], [127,0],[127,0], [127,0], [127,0], [127,0], [127,0]]},
+	{name:"2 - Compressed", points : [[0,127],[24, 118], [52, 101], [102, 42], [127,0], [127,0],[127,0], [127,0], [127,0], [127,0]]},
+	{name:"3 - Medium", points : [[0,127],[11, 98],[27, 74],[62, 65],[97, 57],[116, 21],[121, 5],[127,0], [127,0], [127,0],]},
+	{name:"4 - Compressor/Expander", points : [[0,127],[1, 114],[12, 104],[100, 94],[116, 55],[122, 5], [127,0], [127,0], [127,0], [127,0]]},
+	{name:"5 - Low velocity 1", points : [[0,127],[6, 120],[30, 120],[53, 112],[81, 89],[102, 59],[113, 30],[119, 5], [127,0], [127,0]]},
+	{name:"6 - Low velocity 2", points : [[0,127],[9, 116],[45, 116],[62, 110],[83, 95],[100, 73],[113, 44],[120, 6], [127,0], [127,0]]},
+	{name:"7 - Compressed top and bottom", points : [[0,127],[5, 104],[47, 94],[77, 82],[99, 66],[115, 45],[120, 34],[122, 5], [127,0], [127,0]]},
+	{name:"8 - Full velocity", points : [[0,0], [127,0], [127,0], [127,0], [127,0], [127,0], [127,0], [127,0], [127,0], [127,0]]}
+	];
+var midiFileBuffer = [];
 
 function onMIDISuccess( midiAccess ) {
 	console.log( "MIDI ready!" );
@@ -400,9 +431,6 @@ if (navigator.requestMIDIAccess) {
 } else {
 	onMIDIFailure("");
 }
-
-var pianoDeVoyage;
-let searchParams = new URLSearchParams(window.location.search);
 
 function listInputsAndOutputs( midiAccess ) {
 	pianoDeVoyage = null;
@@ -450,6 +478,9 @@ function listInputsAndOutputs( midiAccess ) {
 							document.getElementById("load").addEventListener("click", onLoadFromKeyboard);
 							document.getElementById("reboot").addEventListener("click", onReboot);
 							document.getElementById("selfTest").addEventListener("click", selfTest);
+							document.getElementById("writeBuffer").addEventListener("click", writeBuffer);
+							document.getElementById("saveMidiFile").addEventListener("click", saveMidiFile);
+							document.getElementById("deleteAllMidiFiles").addEventListener("click", deleteAllMidiFiles);
 							
 						} else {
 							// will trigger a state change event
@@ -523,7 +554,7 @@ function onResetDefaults( event ) {
 	document.getElementById("joystick_vrx").querySelector("#knobcontrol").value = 0;
 	select = document.getElementById("joystick_vry").querySelector("#knobmode");
 	select.selectedIndex = 2;
-	document.getElementById("joystick_vry").querySelector("#knobcontrol").value = 2;
+	document.getElementById("joystick_vry").querySelector("#knobcontrol").value = 3;
 	select.dispatchEvent(new Event('change'));
 	// buttons
 	document.getElementById("butmode0").selectedIndex = 2;
@@ -552,6 +583,21 @@ function selfTest( event ) {
 		pianoDeVoyage.send([0x90, 60, 0x7f]);
 	}
 	selfTestNoteOn = !selfTestNoteOn;
+}
+
+function writeBuffer( event ) {
+	event.preventDefault();
+	sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_SAVE_MIDIBUFFER);
+}
+
+function deleteAllMidiFiles( event ) {
+    event.preventDefault();
+    sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_DELETE_MIDIFILES);
+}
+
+function saveMidiFile( event ) {
+	event.preventDefault();
+	sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_DUMP_MIDIFILE);
 }
 
 function onLoadFromKeyboard( event ) {
@@ -708,8 +754,12 @@ function onMIDIMessage( event ) {
 			break;
 	}
 	if (event.data[0] == 0xF0) {
-		// make sure this is a write event
-		if (event.data[4] === ACTION_WRITE) {
+		// SYSEX event		
+		const SYSEX_START = 0x10;
+		const SYSEX_ACTION = 0x42;
+		
+		if (event.data[2] === SYSEX_START && event.data[3] === SYSEX_ACTION && event.data[4] === ACTION_WRITE) {
+			// this is a write event
 			v = event.data[6];
 			var values = readSysExValues(event.data);
 			switch(event.data[5]) {
@@ -744,20 +794,52 @@ function onMIDIMessage( event ) {
 					var v2 = parseInt(String.fromCharCode(values[2]));
 					var v3 = parseInt(String.fromCharCode(values[3]));
 					var v4 = parseInt(String.fromCharCode(values[4]));
-					var f = v0;
-					f += v1 + ".";
+					var f = v1 + ".";
 					f += v2 + ".";
 					f += v3 + ".";
 					f += v4;
-					var firmwareVersion = v1*1000+v2*100+v3*10+v4;
 					document.getElementById("firmware").innerHTML = f;
 					
-					var expertMode = searchParams.has('expert');
+					// model name
+					var modelName;
+					switch(v0) {
+						case "v" :
+							modelName = "V2DJ24";
+							break;
+						case "w" :
+							modelName = "V2DJ15";
+							break;
+						case "u" :
+							modelName = "V2C24K2";
+							break;
+						case "s" :
+							modelName = "V2C24K1";
+							break;
+						case "r" :
+							modelName = "V2C15K2";
+							break;
+						case "n" :
+							modelName = "V2C15K1";
+							break;
+						case "o" :
+							modelName = "V2A";
+							break;
+						default :
+							modelName = "V2";
+					}
+					document.getElementById("model-name").innerHTML = modelName;
 					
+					// expert mode
+					var expertMode = searchParams.has('expert');
 					if (expertMode) {
 						document.getElementById("expert").removeAttribute("hidden");
 					}
+					
 					// display compatible features
+					var firmwareVersion = v1*1000+v2*100+v3*10+v4;
+					if (firmwareVersion >= 2970) {
+							document.getElementById("midirecorder").removeAttribute("hidden");
+					} 
 					if (firmwareVersion < 2930) {
 						for (var i=0; i<4; i++) {
 							let butMode = document.getElementById("butmode"+i);
@@ -868,10 +950,51 @@ function onMIDIMessage( event ) {
 					document.getElementById("EEPROM_DISABLE_SOUNDBOARD").checked = v;
 					break;
 				}
+			} else {
+				// Get the message body (without the Sysex start and end) and decode it
+				var sysExBody = event.data.slice(1,event.data.length-1);
+				console.log(sysExBody);
+				var sysExBodyMsg = decodeSysEx(sysExBody);
+				console.log(sysExBodyMsg);
+				const SYSEX_MIDI_FILE_HEADER = [0x4D,0x54,0x68,0x64,0x00,0x00,0x00];
+				hasMidiFileHeader = true;
+				i=0;
+				while (hasMidiFileHeader && i<SYSEX_MIDI_FILE_HEADER.length) {
+					if (sysExBodyMsg[i] !== SYSEX_MIDI_FILE_HEADER[i]) {
+						hasMidiFileHeader = false;
+					}
+					i++;
+				}
+				if (hasMidiFileHeader) {
+					console.log("hasMidiFileHeader");
+					midiFileBuffer = [sysExBodyMsg];
+				} else if (midiFileBuffer.length === 0) {
+					// unknown sysex message
+					console.log("Unknown sysex message");
+				} else {
+					// continue appending the file buffer
+					midiFileBuffer.push(sysExBodyMsg);
+				}
+				if ((midiFileBuffer.length > 0) && (sysExBodyMsg.length < 112)) {
+					// end for midi file
+					createMidiFile();
+					midiFileBuffer = [];
+				}
 			}
 		}
 		
 }
+
+function createMidiFile() {
+  const blob = new Blob(midiFileBuffer, { type: 'audio/midi' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'voyage.mid';
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 
 function readSysExValues(buffer) {
 	var v, v2;
@@ -904,17 +1027,25 @@ function sendSysEx( output , action, addr, values) {
 	output.send( buffer);
 }
 
-var velCurveConfig = [];
-var velCurves = [
-	{name:"1 - Linear", points : [[0,127], [127,0], [127,0], [127,0], [127,0],[127,0], [127,0], [127,0], [127,0], [127,0]]},
-	{name:"2 - Compressed", points : [[0,127],[24, 118], [52, 101], [102, 42], [127,0], [127,0],[127,0], [127,0], [127,0], [127,0]]},
-	{name:"3 - Medium", points : [[0,127],[11, 98],[27, 74],[62, 65],[97, 57],[116, 21],[121, 5],[127,0], [127,0], [127,0],]},
-	{name:"4 - Compressor/Expander", points : [[0,127],[1, 114],[12, 104],[100, 94],[116, 55],[122, 5], [127,0], [127,0], [127,0], [127,0]]},
-	{name:"5 - Low velocity 1", points : [[0,127],[6, 120],[30, 120],[53, 112],[81, 89],[102, 59],[113, 30],[119, 5], [127,0], [127,0]]},
-	{name:"6 - Low velocity 2", points : [[0,127],[9, 116],[45, 116],[62, 110],[83, 95],[100, 73],[113, 44],[120, 6], [127,0], [127,0]]},
-	{name:"7 - Compressed top and bottom", points : [[0,127],[5, 104],[47, 94],[77, 82],[99, 66],[115, 45],[120, 34],[122, 5], [127,0], [127,0]]},
-	{name:"8 - Full velocity", points : [[0,0], [127,0], [127,0], [127,0], [127,0], [127,0], [127,0], [127,0], [127,0], [127,0]]}
-	];
+function decodeSysEx(inSysEx) {
+    msbStorage = 0;
+    byteIndex  = 0;
+    outData = [];
+
+    for (i=0; i<=inSysEx.length; i++) {
+        if (i % 8 == 0) {
+            msbStorage = inSysEx[i];
+            byteIndex = 6;
+        } else {
+            body = inSysEx[i];
+            msb = ((msbStorage >> byteIndex) & 1) << 7;
+            byteIndex -= 1;
+            outData.push(msb | body);
+         }  
+    }
+    output = new Uint8Array(outData);
+    return output;
+}
 
 function drawVelocityCurve() {
 	var canvas = document.getElementById("velocity-canvas");
@@ -985,6 +1116,10 @@ initVelocityCanvas();
 });
 
 </script>
-<div style="color : lightgrey;">v1.2.1</div>
+
+	<hr>
+	
+<div style="color : lightgrey;">v1.3.0</div>
+
  </body>
 </html>
