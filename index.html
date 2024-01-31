@@ -337,6 +337,17 @@ button, input, optgroup, select, textarea {
             <input id="reboot" type="submit" class="btn btn-primary" value="Reboot keyboard" disabled>
             <input id="selfTest" type="submit" class="btn btn-primary" value="Self Test keyboard" disabled>
             <input id="deleteAllMidiFiles" type="submit" class="btn btn-danger" value="Delete all saved sessions" disabled>
+            <br>
+            <br>
+            <div id="maxdelay">
+                    <b>Max delay for pianissimo detection (ms)</b>
+                    <br>
+                    <span id="cc-number">Black keys</span>
+                    <input id="maxdelaybk" type="text" maxlength="3" size="3">
+                    <br>
+                    <span id="cc-number">White keys</span>
+                    <input id="maxdelaywk" type="text" maxlength="3" size="3">
+                </div>
         </div>
     </div>	
 	
@@ -377,6 +388,10 @@ const EEPROM_JOYSTICK_VRX_MODE = 41;
 const EEPROM_JOYSTICK_VRX_CTRL = 42;
 const EEPROM_JOYSTICK_VRY_MODE = 43;
 const EEPROM_JOYSTICK_VRY_CTRL = 44;
+const EEPROM_KEY_CNT = 45;
+const EEPROM_MAX_DELAY_MS_BK = 46;
+const EEPROM_MAX_DELAY_MS_WK = 47;
+
 const EEPROM_SERIAL = 125;
 const EEPROM_FIRMWARE = 126;
 const EEPROM_DUMP_MIDIFILE = 124;
@@ -568,6 +583,9 @@ function onResetDefaults( event ) {
 	// other
 	document.getElementById("EEPROM_USB_SERIAL").checked = 0;
 	document.getElementById("EEPROM_DISABLE_SOUNDBOARD").checked = 0;
+	// maxdelay
+	document.getElementById("maxdelaybk").value = 70;
+	document.getElementById("maxdelaywk").value = 70;
 }
 
 function onReboot( event ) {
@@ -620,6 +638,8 @@ function loadFromKeyboard() {
 	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_DISABLE_SOUNDBOARD);	
 	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_JOYSTICK_VRX_MODE);
 	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_JOYSTICK_VRY_MODE);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_MAX_DELAY_MS_BK);
+	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_MAX_DELAY_MS_WK);
 }
 
 function onSubmit( event ) {
@@ -687,6 +707,10 @@ function onSubmit( event ) {
 	// soundboard
 	sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_DISABLE_SOUNDBOARD, [document.getElementById("EEPROM_DISABLE_SOUNDBOARD").checked]);
 	sendSysEx(pianoDeVoyage, ACTION_READ, EEPROM_DISABLE_SOUNDBOARD);
+	
+	// maxdelay
+	sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_MAX_DELAY_MS_BK, [document.getElementById("maxdelaybk").value]);
+	sendSysEx(pianoDeVoyage, ACTION_WRITE, EEPROM_MAX_DELAY_MS_WK, [document.getElementById("maxdelaywk").value]);
 
 	alert("Keyboard configuration updated");
 }
@@ -847,8 +871,12 @@ function onMIDIMessage( event ) {
 						document.getElementById("expert").removeAttribute("hidden");
 					}
 					
-					// display compatible features
+					
 					var firmwareVersion = v1*1000+v2*100+v3*10+v4;
+					// display compatible features
+					if (firmwareVersion >= 2980) {
+                            document.getElementById("maxdelay").removeAttribute("hidden");
+                    } 
 					if (firmwareVersion >= 2970) {
 							document.getElementById("midirecorder").removeAttribute("hidden");
 					} 
@@ -961,6 +989,12 @@ function onMIDIMessage( event ) {
 				case EEPROM_DISABLE_SOUNDBOARD:
 					document.getElementById("EEPROM_DISABLE_SOUNDBOARD").checked = v;
 					break;
+				case EEPROM_MAX_DELAY_MS_BK:
+                    document.getElementById("maxdelaybk").value = v;
+                    break;
+                case EEPROM_MAX_DELAY_MS_WK:
+                    document.getElementById("maxdelaywk").value = v;
+                    break;
 				}
 			} else {
 				// Get the message body (without the Sysex start and end) and decode it
@@ -1026,17 +1060,25 @@ function readSysExValues(buffer) {
 }
 
 function sendSysEx( output , action, addr, values) {
+    valid = true;
 	var buffer = [0xF0, MANUFACTURER_MIDI_ID, 0x10, 0x42, action, addr];
 	if (values) {
 		for (var i=0; i<values.length; i++) {
-			buffer.push(values[i]);
+		  v = values[i];
+		    if (v>=0 && v<=127) {
+			    buffer.push(values[i]);
+			} else {
+			    valid = false;
+			}
 		}
 	} else {
 		buffer.push(0x00);
 	}
 	buffer.push(0x00);
 	buffer.push(0xF7);
-	output.send( buffer);
+	if (valid) {
+	   output.send(buffer);
+	} 
 }
 
 function decodeSysEx(inSysEx) {
@@ -1131,7 +1173,7 @@ initVelocityCanvas();
 
 	<hr>
 	
-<div style="color : lightgrey;">v1.3.0</div>
+<div style="color : lightgrey;">v1.4.0</div>
 
  </body>
 </html>
