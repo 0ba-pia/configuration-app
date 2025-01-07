@@ -32,7 +32,19 @@ button, input, optgroup, select, textarea {
 </head>
 <body>
 
-<div class="container">
+<div class="container" id="connect-window" hidden>
+<div class="row">
+    <div class="col">
+        <h2>Keyboard Status</h2>
+
+        <div id="device">
+            <span class='text-warning'>Please connect a compatible device</span>
+        </div>
+    </div>
+</div>
+</div>
+
+<div class="container" id="main-window" hidden>
 
 <div id="alert" class="alert alert-success alert-dismissible hidden" role="alert">
   <span id="message"></span>
@@ -46,9 +58,9 @@ button, input, optgroup, select, textarea {
       	<h2>Keyboard Status</h2>
 
 		<div id="device">
-			Device connected : <span id="device-name"></span> <br>
-			Model : <span id="model-name"></span> <br>
-			Firmware version : <span id="firmware"></span><br>
+			Device connected : <span id="device-name"></span>
+			(Model : <span id="model-name"></span> |
+			Firmware : <span id="firmware"></span>)<br>
 			MIDI Event : <span id="midiEvent"></span> <span id="midiValue"></span> <span id="midiValue1"></span>
 		</div>
 		<hr>
@@ -467,6 +479,10 @@ function listInputsAndOutputs( midiAccess ) {
 							console.log( "Output port [type:'" + output.type + "'] id:'" + output.id +
 								      "' manufacturer:'" + output.manufacturer + "' name:'" + output.name +
 								      "' version:'" + output.version + "'" );
+					        
+					        document.getElementById("connect-window").setAttribute("hidden", true);
+                            document.getElementById("main-window").removeAttribute("hidden");
+                            
 							document.getElementById("device-name").innerHTML = "<span class='text-success'>"+output.name+"</span>";
 							
 							// add event listeners
@@ -485,7 +501,7 @@ function listInputsAndOutputs( midiAccess ) {
 							
 							document.getElementById("joystick_vrx").querySelector("#knobmode").addEventListener('change', onChangeKnobMode);
 							document.getElementById("joystick_vry").querySelector("#knobmode").addEventListener('change', onChangeKnobMode);
-
+                            
 							loadFromKeyboard();
 							
 							document.getElementById("reset").addEventListener("click", onResetDefaults);
@@ -511,7 +527,11 @@ function listInputsAndOutputs( midiAccess ) {
 	}
 
 	if (!pianoDeVoyage) {
-		document.getElementById("device-name").innerHTML = "<span class='text-warning'>Please connect a compatible device</span>";
+		document.getElementById("connect-window").removeAttribute("hidden");
+		document.getElementById("main-window").setAttribute("hidden", true);
+	} else {
+	    document.getElementById("connect-window").setAttribute("hidden", true);
+        document.getElementById("main-window").removeAttribute("hidden");
 	}
 }
 
@@ -1179,7 +1199,7 @@ initVelocityCanvas();
 
 	<hr>
 	
-<div style="color : lightgrey;">v1.4.0</div>
+<div style="color : lightgrey;">v1.4.1</div>
 
  </body>
 </html>
