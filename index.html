@@ -59,8 +59,11 @@ button, input, optgroup, select, textarea {
 
 		<div id="device">
 			Device connected : <span id="device-name"></span>
-			(Model : <span id="model-name"></span> |
-			Firmware : <span id="firmware"></span>)<br>
+			(
+			Model : <span id="model-name"></span> |
+			Firmware : <span id="firmware"></span> | 
+			Nb keys : <span id="keyCount"></span>
+			)<br>
 			MIDI Event : <span id="midiEvent"></span> <span id="midiValue"></span> <span id="midiValue1"></span>
 		</div>
 		<hr>
@@ -440,7 +443,7 @@ var midiFileBuffer = [];
 function onMIDISuccess( midiAccess ) {
 	console.log( "MIDI ready!" );
 	midiAccess.addEventListener('statechange', function(event) {
-	  listInputsAndOutputs(midiAccess);
+	  listInputsAndOutputs(event.target);
 	});
 	listInputsAndOutputs( midiAccess );
 }
@@ -1021,6 +1024,8 @@ function onMIDIMessage( event ) {
                 case EEPROM_MAX_DELAY_MS_WK:
                     document.getElementById("maxdelaywk").value = v;
                     break;
+                case EEPROM_KEY_CNT:
+                    document.getElementById("keyCount").innerHTML = v;
 				}
 			} else {
 				// Get the message body (without the Sysex start and end) and decode it
