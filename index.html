@@ -469,13 +469,13 @@ function listInputsAndOutputs( midiAccess ) {
 	var iter = midiAccess.outputs.values();
     for (var o = iter.next(); !o.done; o = iter.next()) {
     	var output = o.value;
-		if ((output.name.startsWith("Piano de Voyage")) || (output.manufacturer.startsWith("Ryme Music"))) {
+		if ((output.name.startsWith("RP2040")) ||(output.name.startsWith("Piano de Voyage")) || (output.manufacturer.startsWith("Ryme Music"))) {
 			if (output.connection === "open") {
 				// inputs
 				var inputs = midiAccess.inputs.values();
     			for (var inp = inputs.next(); !inp.done; inp = inputs.next()) {
     			var input = inp.value;
-					if (input.name.startsWith("Piano de Voyage")) {
+					if ((input.name.startsWith("RP2040")) || input.name.startsWith("Piano de Voyage")) {
 						if (input.connection === "open") {
 							pianoDeVoyage = output;
 							input.onmidimessage = onMIDIMessage;
@@ -939,7 +939,7 @@ function onMIDIMessage( event ) {
 						if (expertMode) { 
 							document.getElementById("EEPROM_USB_SERIAL_div").removeAttribute("hidden");
 						}	
-						if (v0 >= 'r') {
+						if ((v0 >= 'r') || (v0 === 'd')){
 							document.getElementById("EEPROM_DISABLE_SOUNDBOARD_div").removeAttribute("hidden");
 						} else {
 							document.getElementById("EEPROM_DISABLE_SOUNDBOARD_div").setAttribute("hidden", true);
