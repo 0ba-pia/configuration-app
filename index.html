@@ -60,9 +60,9 @@ button, input, optgroup, select, textarea {
 		<div id="device">
 			Device connected : <span id="device-name"></span>
 			(
-			Model : <span id="model-name"></span> |
-			Firmware : <span id="firmware"></span> | 
-			Nb keys : <span id="keyCount"></span>
+			<span id="model-name"></span> |
+			Firmware : <span id="firmware"></span>
+			<span id="keyCount"></span>
 			)<br>
 			MIDI Event : <span id="midiEvent"></span> <span id="midiValue"></span> <span id="midiValue1"></span>
 		</div>
@@ -368,6 +368,17 @@ button, input, optgroup, select, textarea {
 	
 </form>
 
+
+</div>
+
+<hr>
+<div class="container">
+    <div style="color : lightgrey;">v1.4.1</div>
+</div>
+
+ </body>
+</html>
+
 <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
@@ -486,7 +497,15 @@ function listInputsAndOutputs( midiAccess ) {
 					        document.getElementById("connect-window").setAttribute("hidden", true);
                             document.getElementById("main-window").removeAttribute("hidden");
                             
-							document.getElementById("device-name").innerHTML = "<span class='text-success'>"+output.name+"</span>";
+                            let deviceName;
+                            
+                            if (output.name.startsWith("RP2040")) {
+                                deviceName = "Piano de Voyage (RP)";
+                            } else {
+                                deviceName = output.name;
+                            }
+                            
+							document.getElementById("device-name").innerHTML = "<span class='text-success'>"+deviceName+"</span>";
 							
 							// add event listeners
 							var vel = document.getElementById("velocity");
@@ -1025,7 +1044,7 @@ function onMIDIMessage( event ) {
                     document.getElementById("maxdelaywk").value = v;
                     break;
                 case EEPROM_KEY_CNT:
-                    document.getElementById("keyCount").innerHTML = v;
+                    document.getElementById("keyCount").innerHTML =  "| Nb keys : "+v;
 				}
 			} else {
 				// Get the message body (without the Sysex start and end) and decode it
@@ -1201,10 +1220,3 @@ initVelocityCanvas();
 });
 
 </script>
-
-	<hr>
-	
-<div style="color : lightgrey;">v1.4.1</div>
-
- </body>
-</html>
